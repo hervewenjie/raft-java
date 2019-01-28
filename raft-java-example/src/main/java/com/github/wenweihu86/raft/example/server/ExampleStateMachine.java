@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 
 /**
- * Created by wenweihu86 on 2017/5/9.
+ * Created by chengwenjie on 2017/5/9.
  */
 public class ExampleStateMachine implements StateMachine {
 

@@ -7,7 +7,7 @@ import com.github.wenweihu86.rpc.client.RPCProxy;
 import com.google.protobuf.util.JsonFormat;
 
 /**
- * Created by wenweihu86 on 2017/5/14.
+ * Created by chengwenjie on 2017/5/14.
  */
 public class ClientMain {
     public static void main(String[] args) {

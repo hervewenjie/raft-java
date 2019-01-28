@@ -12,7 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
 /**
- * Created by wenweihu86 on 2017/5/14.
+ * Created by chengwenjie on 2017/5/14.
  */
 public class ConcurrentClientMain {
     private static JsonFormat.Printer printer = JsonFormat.printer().omittingInsignificantWhitespace();

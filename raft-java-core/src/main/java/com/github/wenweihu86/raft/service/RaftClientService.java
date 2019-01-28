@@ -4,7 +4,7 @@ import com.github.wenweihu86.raft.proto.RaftMessage;
 
 /**
  * raft集群管理接口。
- * Created by wenweihu86 on 2017/5/14.
+ * Created by chengwenjie on 2017/5/14.
  */
 public interface RaftClientService {
 

@@ -8,7 +8,7 @@ import com.github.wenweihu86.rpc.client.RPCClient;
 import com.github.wenweihu86.rpc.client.RPCProxy;
 
 /**
- * Created by wenweihu86 on 2017/5/5.
+ * Created by chengwenjie on 2017/5/5.
  */
 public class Peer {
     private RaftMessage.Server server;

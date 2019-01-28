@@ -3,8 +3,9 @@ package com.github.wenweihu86.raft.service;
 import com.github.wenweihu86.raft.proto.RaftMessage;
 
 /**
- * raft节点之间相互通信的接口。
- * Created by wenweihu86 on 2017/5/2.
+ * raft节点之间相互通信的接口
+ *
+ * Created by chengwenjie on 2017/5/2.
  */
 public interface RaftConsensusService {
 

@@ -7,7 +7,7 @@ import java.util.concurrent.Future;
 
 /**
  * 用于生成client异步调用所需的proxy
- * Created by wenweihu86 on 2017/5/14.
+ * Created by chengwenjie on 2017/5/14.
  */
 public interface RaftClientServiceAsync extends RaftClientService {
 

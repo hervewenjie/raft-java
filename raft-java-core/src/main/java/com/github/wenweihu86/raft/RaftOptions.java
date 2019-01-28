@@ -5,7 +5,7 @@ import lombok.Setter;
 
 /**
  * raft配置选项
- * Created by wenweihu86 on 2017/5/2.
+ * Created by chengwenjie on 2017/5/2.
  */
 @Setter
 @Getter

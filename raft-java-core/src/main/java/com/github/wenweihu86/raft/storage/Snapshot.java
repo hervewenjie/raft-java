@@ -21,7 +21,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
- * Created by wenweihu86 on 2017/5/6.
+ * Created by chengwenjie on 2017/5/6.
  */
 public class Snapshot {
 

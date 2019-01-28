@@ -20,7 +20,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.*;
 
 /**
- * Created by wenweihu86 on 2017/5/2.
+ * Created by chengwenjie on 2017/5/2.
  * 该类是raft核心类，主要有如下功能：
  * 1、保存raft节点核心数据（节点状态信息、日志信息、snapshot等），
  * 2、raft节点向别的raft发起rpc请求相关函数
@@ -66,10 +66,9 @@ public class RaftNode {
     private ScheduledFuture electionScheduledFuture;
     private ScheduledFuture heartbeatScheduledFuture;
 
-    public RaftNode(RaftOptions raftOptions,
-                    List<RaftMessage.Server> servers,
-                    RaftMessage.Server localServer,
-                    StateMachine stateMachine) {
+    public RaftNode(RaftOptions raftOptions, List<RaftMessage.Server> servers,
+                    RaftMessage.Server localServer, StateMachine stateMachine) {
+
         this.raftOptions = raftOptions;
         RaftMessage.Configuration.Builder confBuilder = RaftMessage.Configuration.newBuilder();
         for (RaftMessage.Server server : servers) {
@@ -112,23 +111,27 @@ public class RaftNode {
         lastAppliedIndex = commitIndex;
     }
 
+    /**
+     * init raft node
+     */
     public void init() {
+
+        // set other peers
         for (RaftMessage.Server server : configuration.getServersList()) {
-            if (!peerMap.containsKey(server.getServerId())
-                    && server.getServerId() != localServer.getServerId()) {
+            if (!peerMap.containsKey(server.getServerId()) && server.getServerId() != localServer.getServerId()) {
                 Peer peer = new Peer(server);
                 peer.setNextIndex(raftLog.getLastLogIndex() + 1);
                 peerMap.put(server.getServerId(), peer);
             }
         }
 
-        // init thread pool
+        // scheduled take snapshot
         executorService = new ThreadPoolExecutor(
-                raftOptions.getRaftConsensusThreadNum(),
-                raftOptions.getRaftConsensusThreadNum(),
-                60,
-                TimeUnit.SECONDS,
-                new LinkedBlockingQueue<Runnable>());
+                            raftOptions.getRaftConsensusThreadNum(),
+                            raftOptions.getRaftConsensusThreadNum(),
+                            60,
+                            TimeUnit.SECONDS,
+                            new LinkedBlockingQueue<Runnable>());
         scheduledExecutorService = Executors.newScheduledThreadPool(2);
         scheduledExecutorService.scheduleWithFixedDelay(new Runnable() {
             @Override
@@ -136,6 +139,7 @@ public class RaftNode {
                 takeSnapshot();
             }
         }, raftOptions.getSnapshotPeriodSeconds(), raftOptions.getSnapshotPeriodSeconds(), TimeUnit.SECONDS);
+
         // start election
         resetElectionTimer();
     }
@@ -446,15 +450,16 @@ public class RaftNode {
         ThreadLocalRandom random = ThreadLocalRandom.current();
         int randomElectionTimeout = raftOptions.getElectionTimeoutMilliseconds()
                 + random.nextInt(0, raftOptions.getElectionTimeoutMilliseconds());
-        LOG.debug("new election time is after {} ms", randomElectionTimeout);
+        LOG.info("new election time is after {} ms", randomElectionTimeout);
+        System.out.println(String.format("new election time is after %s ms", randomElectionTimeout));
         return randomElectionTimeout;
     }
 
     /**
-     * 客户端发起pre-vote请求。
-     * pre-vote/vote是典型的二阶段实现。
-     * 作用是防止某一个节点断网后，不断的增加term发起投票；
-     * 当该节点网络恢复后，会导致集群其他节点的term增大，导致集群状态变更。
+     * 客户端发起pre-vote请求
+     * pre-vote/vote是典型的二阶段实现
+     * 作用是防止某一个节点断网后, 不断的增加term发起投票
+     * 当该节点网络恢复后, 会导致集群其他节点的term增大, 导致集群状态变更
      */
     private void startPreVote() {
         lock.lock();
@@ -464,28 +469,25 @@ public class RaftNode {
                 return;
             }
             LOG.info("Running pre-vote in term {}", currentTerm);
+            System.out.println(String.format("Running pre-vote in term %s", currentTerm));
             state = NodeState.STATE_PRE_CANDIDATE;
         } finally {
             lock.unlock();
         }
 
+        // send pre-vote request to each peer
         for (RaftMessage.Server server : configuration.getServersList()) {
             if (server.getServerId() == localServer.getServerId()) {
                 continue;
             }
             final Peer peer = peerMap.get(server.getServerId());
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    preVote(peer);
-                }
-            });
+            executorService.submit(() -> preVote(peer));
         }
         resetElectionTimer();
     }
 
     /**
-     * 客户端发起正式vote，对candidate有效
+     * 客户端发起正式vote, 对candidate有效
      */
     private void startVote() {
         lock.lock();
@@ -508,12 +510,7 @@ public class RaftNode {
                 continue;
             }
             final Peer peer = peerMap.get(server.getServerId());
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    requestVote(peer);
-                }
-            });
+            executorService.submit(() -> requestVote(peer));
         }
     }
 
@@ -523,6 +520,7 @@ public class RaftNode {
      */
     private void preVote(Peer peer) {
         LOG.info("begin pre vote request");
+        System.out.println(String.format("begin pre-vote request to %s", peer.getServer().getServerId()));
         RaftMessage.VoteRequest.Builder requestBuilder = RaftMessage.VoteRequest.newBuilder();
         lock.lock();
         try {
@@ -546,6 +544,7 @@ public class RaftNode {
      */
     private void requestVote(Peer peer) {
         LOG.info("begin vote request");
+        System.out.println(String.format("begin vote request to %s", peer.getServer().getServerId()));
         RaftMessage.VoteRequest.Builder requestBuilder = RaftMessage.VoteRequest.newBuilder();
         lock.lock();
         try {
@@ -582,16 +581,16 @@ public class RaftNode {
                     return;
                 }
                 if (response.getTerm() > currentTerm) {
-                    LOG.info("Received pre vote response from server {} " +
-                                    "in term {} (this server's term was {})",
+                    LOG.info("Received pre vote response from server {} in term {} (this server's term was {})",
                             peer.getServer().getServerId(),
                             response.getTerm(),
                             currentTerm);
                     stepDown(response.getTerm());
                 } else {
+
                     if (response.getGranted()) {
-                        LOG.info("get pre vote granted from server {} for term {}",
-                                peer.getServer().getServerId(), currentTerm);
+                        LOG.info("get pre vote granted from server {} for term {}", peer.getServer().getServerId(), currentTerm);
+                        System.out.println(String.format("get pre vote granted from server %s for term %s", peer.getServer().getServerId(), currentTerm));
                         int voteGrantedNum = 1;
                         for (RaftMessage.Server server : configuration.getServersList()) {
                             if (server.getServerId() == localServer.getServerId()) {
@@ -603,6 +602,7 @@ public class RaftNode {
                             }
                         }
                         LOG.info("preVoteGrantedNum={}", voteGrantedNum);
+                        System.out.println(String.format("preVoteGrantedNum=%s", voteGrantedNum));
                         if (voteGrantedNum > configuration.getServersCount() / 2) {
                             LOG.info("get majority pre vote, serverId={} when pre vote, start vote",
                                     localServer.getServerId());
@@ -620,10 +620,8 @@ public class RaftNode {
 
         @Override
         public void fail(Throwable e) {
-            LOG.warn("pre vote with peer[{}:{}] failed",
-                    peer.getServer().getEndPoint().getHost(),
-                    peer.getServer().getEndPoint().getPort());
-            peer.setVoteGranted(new Boolean(false));
+            LOG.warn("pre vote with peer[{}:{}] failed", peer.getServer().getEndPoint().getHost(), peer.getServer().getEndPoint().getPort());
+            peer.setVoteGranted(false);
         }
     }
 
@@ -656,6 +654,7 @@ public class RaftNode {
                     if (response.getGranted()) {
                         LOG.info("Got vote from server {} for term {}",
                                 peer.getServer().getServerId(), currentTerm);
+                        System.out.println(String.format("Got vote from server %s for term %s", peer.getServer().getServerId(), currentTerm));
                         int voteGrantedNum = 0;
                         if (votedFor == localServer.getServerId()) {
                             voteGrantedNum += 1;
@@ -672,6 +671,7 @@ public class RaftNode {
                         LOG.info("voteGrantedNum={}", voteGrantedNum);
                         if (voteGrantedNum > configuration.getServersCount() / 2) {
                             LOG.info("Got majority vote, serverId={} become leader", localServer.getServerId());
+                            System.out.println(String.format("Got majority vote, serverId=%s become leader", localServer.getServerId()));
                             becomeLeader();
                         }
                     } else {
@@ -711,24 +711,18 @@ public class RaftNode {
         if (heartbeatScheduledFuture != null && !heartbeatScheduledFuture.isDone()) {
             heartbeatScheduledFuture.cancel(true);
         }
-        heartbeatScheduledFuture = scheduledExecutorService.schedule(new Runnable() {
-            @Override
-            public void run() {
-                startNewHeartbeat();
-            }
-        }, raftOptions.getHeartbeatPeriodMilliseconds(), TimeUnit.MILLISECONDS);
+        heartbeatScheduledFuture = scheduledExecutorService.schedule(() -> startNewHeartbeat(),
+                raftOptions.getHeartbeatPeriodMilliseconds(), TimeUnit.MILLISECONDS);
     }
 
-    // in lock, 开始心跳，对leader有效
+    // in lock
+    // start heartbeat, only valid for leader
     private void startNewHeartbeat() {
         LOG.debug("start new heartbeat, peers={}", peerMap.keySet());
+        System.out.println(String.format("start new heartbeat, peers=%s", peerMap.keySet()));
         for (final Peer peer : peerMap.values()) {
-            executorService.submit(new Runnable() {
-                @Override
-                public void run() {
-                    appendEntries(peer);
-                }
-            });
+            // use appendEntries request as heartbeat
+            executorService.submit(() -> appendEntries(peer));
         }
         resetHeartbeatTimer();
     }

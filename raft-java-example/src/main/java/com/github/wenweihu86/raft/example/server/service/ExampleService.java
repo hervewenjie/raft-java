@@ -1,7 +1,7 @@
 package com.github.wenweihu86.raft.example.server.service;
 
 /**
- * Created by wenweihu86 on 2017/5/9.
+ * Created by chengwenjie on 2017/5/9.
  */
 public interface ExampleService {
 

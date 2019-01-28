@@ -1,8 +1,8 @@
 package com.github.wenweihu86.raft.example.server;
 
+import com.github.wenweihu86.raft.RaftNode;
 import com.github.wenweihu86.raft.RaftOptions;
 import com.github.wenweihu86.raft.example.server.service.ExampleService;
-import com.github.wenweihu86.raft.RaftNode;
 import com.github.wenweihu86.raft.example.server.service.impl.ExampleServiceImpl;
 import com.github.wenweihu86.raft.proto.RaftMessage;
 import com.github.wenweihu86.raft.service.RaftClientService;
@@ -17,9 +17,14 @@ import java.util.List;
 /**
  * Created by chengwenjie on 2017/5/9.
  */
-public class ServerMain {
+public class ServerMain3 {
 
     public static void main(String[] args) {
+
+        args = new String[3];
+        args[0] = "./data";
+        args[1] = "127.0.0.1:8051:1,127.0.0.1:8052:2,127.0.0.1:8053:3";
+        args[2] = "127.0.0.1:8053:3";
 
         // parse args
         if (args.length != 3) {

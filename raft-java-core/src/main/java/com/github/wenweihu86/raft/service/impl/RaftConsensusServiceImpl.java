@@ -18,7 +18,7 @@ import java.io.RandomAccessFile;
 import java.util.*;
 
 /**
- * Created by wenweihu86 on 2017/5/2.
+ * Created by chengwenjie on 2017/5/2.
  */
 public class RaftConsensusServiceImpl implements RaftConsensusService {
 
